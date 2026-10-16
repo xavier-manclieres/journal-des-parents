@@ -1,0 +1,34 @@
+# Démo publique sans mot de passe. À importer dans le site, avant les blocs /aidants/.
+# Remplacer <TOKEN_DEMO> (préfixe secret des webhooks DEMO) et <RACINE> (dossier de la page /aidants/).
+# Tout passe sous l'identité « Visiteur », jamais éditeur : les en-têtes sont posés par Caddy, pas par le navigateur.
+
+@demoDirect path /webhook/<TOKEN_DEMO>-* /webhook-test/<TOKEN_DEMO>-*
+handle @demoDirect {
+	respond 404
+}
+
+redir /demo /demo/ 308
+
+handle /demo/api/moi {
+	respond "Visiteur" 200
+}
+
+# Une route par webhook : note agenda positionner documents document rdv-modifier rdv-supprimer
+handle /demo/api/note {
+	rewrite * /webhook/<TOKEN_DEMO>-note
+	reverse_proxy n8n:5678 {
+		header_up X-Aidant "Visiteur"
+		header_up X-Admin "0"
+	}
+}
+# ... même bloc pour agenda, positionner, documents, document, rdv-modifier, rdv-supprimer
+
+handle /demo/api/* {
+	respond 404
+}
+
+handle /demo/* {
+	uri strip_prefix /demo
+	root * <RACINE>/demo
+	file_server
+}

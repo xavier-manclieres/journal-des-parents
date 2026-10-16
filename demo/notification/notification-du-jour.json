@@ -1,0 +1,152 @@
+[
+  {
+    "id": "<ID_WORKFLOW>",
+    "name": "AIDANTS — Notification du jour",
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "30 7 * * *"
+              }
+            ]
+          }
+        },
+        "id": "502d01c9-de68-4499-a645-1a123c3cb2df",
+        "name": "Chaque matin à 7 h 30",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          200,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "search",
+          "base": {
+            "__rl": true,
+            "mode": "id",
+            "value": "<BASE_AIRTABLE>"
+          },
+          "table": {
+            "__rl": true,
+            "mode": "id",
+            "value": "<TABLE_AGENDA>"
+          },
+          "filterByFormula": "AND(DATETIME_FORMAT({Date}, 'YYYY-MM-DD') = DATETIME_FORMAT(SET_TIMEZONE(NOW(), 'Europe/Paris'), 'YYYY-MM-DD'), {Statut} != 'Annulé', {Statut} != 'Fait')",
+          "returnAll": true,
+          "options": {}
+        },
+        "id": "10d2ba21-dd1c-472e-8d9e-1309a01622d0",
+        "name": "Événements du jour",
+        "type": "n8n-nodes-base.airtable",
+        "typeVersion": 2.2,
+        "position": [
+          440,
+          300
+        ],
+        "credentials": {
+          "airtableTokenApi": {
+            "id": "<ID_CREDENTIAL_AIRTABLE>",
+            "name": "Airtable AIDANTS"
+          }
+        },
+        "alwaysOutputData": true
+      },
+      {
+        "parameters": {
+          "jsCode": "const items = $input.all().map(i => i.json).filter(j => j && j.id);\nif (!items.length) return [];\nconst f = j => j.fields || j;\nconst rdv = items.map(j => {\n  const x = f(j);\n  const acc = Array.isArray(x['Accompagnant']) ? x['Accompagnant'][0] : (x['Accompagnant'] || '');\n  return { heure: x['Heure'] || '', type: x['Type'] || 'Rendez-vous', personne: x['Personne'] || '', acc: acc && acc.name ? acc.name : acc };\n}).sort((a, b) => (a.heure || '99:99').localeCompare(b.heure || '99:99'));\nconst aCouvrir = rdv.filter(r => !r.acc).length;\nconst lignes = rdv.map(r => (r.heure || 'Journée') + ' · ' + r.type + (r.personne ? ' · ' + r.personne : '') + (r.acc ? ' (avec ' + r.acc + ')' : ' — à couvrir'));\nconst titre = (aCouvrir ? '⚠ ' : '') + \"Aujourd'hui : \" + rdv.length + (rdv.length > 1 ? ' rendez-vous' : ' rendez-vous') + (aCouvrir ? ', ' + aCouvrir + ' à couvrir' : '');\nreturn [{ json: { titre, message: lignes.join('\\n'), priority: aCouvrir ? 4 : 3 } }];"
+        },
+        "id": "3615c580-3349-4201-911f-dda4c3554d60",
+        "name": "Composer la notification",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          680,
+          300
+        ],
+        "notes": "Aucun événement : aucune sortie, donc aucune notification."
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://ntfy.sh",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ topic: '<SUJET_NTFY>', title: $json.titre, message: $json.message, priority: $json.priority, tags: ['calendar'], click: 'https://vps.m0nassistant.help/aidants/' }) }}",
+          "options": {
+            "timeout": 20000
+          }
+        },
+        "id": "6d9514b2-acf7-443e-b906-605e6a6a9d19",
+        "name": "Envoyer sur le téléphone (ntfy)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          920,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "content": "## Notification du jour\nChaque matin à 7 h 30, un résumé des rendez-vous du jour (hors Annulé et Fait) part en notification sur le téléphone via ntfy.\nLe texte ne contient ni titre ni lieu : seulement l'heure, le type, la personne et l'accompagnant.\nAucun rendez-vous : aucune notification.",
+          "height": 190,
+          "width": 540,
+          "color": 4
+        },
+        "id": "7ea05034-a5e7-428b-86fa-7d6b545ac549",
+        "name": "Note notification",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          200,
+          60
+        ]
+      }
+    ],
+    "connections": {
+      "Chaque matin à 7 h 30": {
+        "main": [
+          [
+            {
+              "node": "Événements du jour",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Événements du jour": {
+        "main": [
+          [
+            {
+              "node": "Composer la notification",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Composer la notification": {
+        "main": [
+          [
+            {
+              "node": "Envoyer sur le téléphone (ntfy)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "settings": {
+      "executionOrder": "v1",
+      "timezone": "Europe/Paris",
+      "availableInMCP": true
+    },
+    "active": false
+  }
+]

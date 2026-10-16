@@ -14,6 +14,7 @@ Chemin d'une note : `Téléphone → Caddy (compte) → n8n → Claude → Airta
 | `scripts/aidant-ajouter.sh` | Gestion des comptes et des rôles, miroir dans Airtable |
 | `caddy/Caddyfile.example` | Caddyfile d'exemple, avec `<DOMAINE>` et `<TOKEN>` à remplacer |
 | `docs/architecture.svg` | Schéma fonctionnel |
+| `demo/` | Démo publique à données fictives, et notification du matin (voir `demo/README.md`) |
 
 Les workflows n8n, les identifiants, les jetons et les données de la famille ne sont pas dans ce dépôt.
 
