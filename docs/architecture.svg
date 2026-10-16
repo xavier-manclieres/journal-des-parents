@@ -1,0 +1,50 @@
+<svg viewBox="0 0 760 576" role="img" aria-label="Tout passe par Caddy, qui identifie l’aidant avant n8n et Airtable" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13">
+<rect width="760" height="576" fill="#ffffff"/>
+<defs><marker id="arch-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#5a6a66"/></marker></defs>
+<text x="24" y="34" font-size="15" font-weight="600" fill="#1f2a28">Tout passe par Caddy, qui identifie l’aidant avant n8n et Airtable</text>
+<g fill="none" stroke="#5a6a66" stroke-width="1.25"><path d="M380 112V168" marker-end="url(#arch-arrow)"/><path d="M200 256V284H136V312" marker-end="url(#arch-arrow)"/><path d="M380 256V312" marker-end="url(#arch-arrow)"/><path d="M560 256V284H624V312" marker-end="url(#arch-arrow)"/><path d="M136 400V448" marker-end="url(#arch-arrow)"/><path d="M224 400V424H300V448" marker-end="url(#arch-arrow)"/><path d="M380 400V448" marker-end="url(#arch-arrow)"/><path d="M624 400V448" marker-end="url(#arch-arrow)"/></g>
+<g fill="none" stroke="#5a6a66" stroke-width="1.25"><rect x="210" y="56" width="340" height="56" rx="8"/><rect x="24" y="312" width="224" height="88" rx="8"/><rect x="268" y="312" width="224" height="88" rx="8"/><rect x="512" y="312" width="224" height="88" rx="8"/><rect x="24" y="448" width="224" height="72" rx="8"/><rect x="268" y="448" width="468" height="104" rx="8"/><rect x="284" y="488" width="100" height="48" rx="8"/><rect x="396" y="488" width="100" height="48" rx="8"/><rect x="508" y="488" width="100" height="48" rx="8"/><rect x="620" y="488" width="100" height="48" rx="8"/></g>
+<rect x="170" y="168" width="420" height="88" rx="8" fill="#0f5c5a" fill-opacity="0.12" stroke="#0f5c5a" stroke-width="2"/>
+<g fill="#1f2a28">
+<text x="380" y="80" text-anchor="middle" font-weight="600">Téléphone de l’aidant</text>
+<text x="380" y="192" text-anchor="middle" font-weight="600">Caddy · point d’entrée unique</text>
+<text x="186" y="212" font-size="11.5">Vérifie le compte de l’aidant (caddy-conf/aidants.users)</text>
+<text x="186" y="228" font-size="11.5">Sert la page et relaie /aidants/api/* vers n8n avec X-Aidant</text>
+<text x="186" y="244" font-size="11.5">Bloque l’accès direct aux webhooks des aidants</text>
+<text x="136" y="336" text-anchor="middle" font-weight="600">n8n · Journal vocal</text>
+<text x="40" y="356" font-size="11.5">Normalise, clé anti-doublon</text>
+<text x="40" y="372" font-size="11.5">Analyse par Claude + glossaire</text>
+<text x="40" y="388" font-size="11.5">Enregistre note et rendez-vous</text>
+<text x="380" y="336" text-anchor="middle" font-weight="600">n8n · Agenda</text>
+<text x="284" y="356" font-size="11.5">Lit les rendez-vous à venir</text>
+<text x="284" y="372" font-size="11.5">Enregistre qui s’en occupe</text>
+<text x="284" y="388" font-size="11.5">Refuse un créneau déjà pris</text>
+<text x="624" y="336" text-anchor="middle" font-weight="600">n8n · Documents</text>
+<text x="528" y="356" font-size="11.5">Reçoit photo, PDF, Word, Excel, texte (5 Mo)</text>
+<text x="528" y="372" font-size="11.5">Crée la fiche, joint le fichier</text>
+<text x="528" y="388" font-size="11.5">Relie aux rendez-vous</text>
+<text x="136" y="472" text-anchor="middle" font-weight="600">API Anthropic</text>
+<text x="40" y="492" font-size="11.5">Claude Sonnet 5.5</text>
+<text x="284" y="472" font-weight="600">Airtable · base AIDANTS — Journal</text>
+<text x="334" y="508" text-anchor="middle" font-weight="600">Journal</text>
+<text x="446" y="508" text-anchor="middle" font-weight="600">Agenda</text>
+<text x="558" y="508" text-anchor="middle" font-weight="600">Documents</text>
+<text x="670" y="508" text-anchor="middle" font-weight="600">Glossaire</text>
+</g>
+<g fill="#5a6a66" font-size="11.5">
+<text x="380" y="98" text-anchor="middle">Page /aidants : dicter, agenda, documents</text>
+<text x="392" y="144">HTTPS + identifiant et mot de passe</text>
+<text x="128" y="302" text-anchor="end">note dictée</text>
+<text x="388" y="302">agenda</text>
+<text x="632" y="302">documents</text>
+<text x="144" y="428">analyse</text>
+<text x="308" y="442">écrit</text>
+<text x="388" y="428">lit, met à jour</text>
+<text x="632" y="428">écrit, lit</text>
+<text x="40" y="508">≈ 0,008 $ par note</text>
+<text x="334" y="526" text-anchor="middle">notes</text>
+<text x="446" y="526" text-anchor="middle">rendez-vous</text>
+<text x="558" y="526" text-anchor="middle">photos, PDF</text>
+<text x="670" y="526" text-anchor="middle">noms, sigles</text>
+</g>
+</svg>

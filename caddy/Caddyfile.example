@@ -1,0 +1,109 @@
+# Exemple de Caddyfile : remplacer <DOMAINE> et <TOKEN> (préfixe secret des webhooks n8n).
+# Après toute modification : docker compose restart caddy, puis
+#   docker compose exec caddy caddy validate --config /etc/caddy/Caddyfile
+
+(aidants) {
+    basic_auth {
+        import /etc/caddy/conf/aidants.users
+    }
+}
+
+(editeurs) {
+    basic_auth {
+        import /etc/caddy/conf/aidants.editeurs
+    }
+}
+
+<DOMAINE> {
+    redir /aidants /aidants/
+
+    handle /aidants/api/moi {
+        import aidants
+        header Content-Type "text/plain; charset=utf-8"
+        header Cache-Control "no-store"
+        respond "{http.auth.user.id}" 200
+    }
+    handle /aidants/api/note {
+        import aidants
+        rewrite * /webhook/<TOKEN>-note
+        reverse_proxy n8n:5678 {
+            header_up X-Aidant {http.auth.user.id}
+        }
+    }
+    handle /aidants/api/agenda {
+        import aidants
+        rewrite * /webhook/<TOKEN>-agenda
+        reverse_proxy n8n:5678 {
+            header_up X-Aidant {http.auth.user.id}
+        }
+    }
+    handle /aidants/api/positionner {
+        import aidants
+        rewrite * /webhook/<TOKEN>-positionner
+        reverse_proxy n8n:5678 {
+            header_up X-Aidant {http.auth.user.id}
+        }
+    }
+    handle /aidants/api/documents {
+        import aidants
+        rewrite * /webhook/<TOKEN>-documents
+        reverse_proxy n8n:5678 {
+            header_up X-Aidant {http.auth.user.id}
+        }
+    }
+    handle /aidants/api/document {
+        import aidants
+        rewrite * /webhook/<TOKEN>-document
+        reverse_proxy n8n:5678 {
+            header_up X-Aidant {http.auth.user.id}
+        }
+    }
+    handle /aidants/api/rdv-modifier {
+        import aidants
+        rewrite * /webhook/<TOKEN>-rdv-modifier
+        reverse_proxy n8n:5678 {
+            header_up X-Aidant {http.auth.user.id}
+            header_up X-Admin 0
+        }
+    }
+    handle /aidants/api/rdv-admin-modifier {
+        import editeurs
+        rewrite * /webhook/<TOKEN>-rdv-modifier
+        reverse_proxy n8n:5678 {
+            header_up X-Aidant {http.auth.user.id}
+            header_up X-Admin 1
+        }
+    }
+    handle /aidants/api/rdv-supprimer {
+        import aidants
+        rewrite * /webhook/<TOKEN>-rdv-supprimer
+        reverse_proxy n8n:5678 {
+            header_up X-Aidant {http.auth.user.id}
+            header_up X-Admin 0
+        }
+    }
+    handle /aidants/api/rdv-admin-supprimer {
+        import editeurs
+        rewrite * /webhook/<TOKEN>-rdv-supprimer
+        reverse_proxy n8n:5678 {
+            header_up X-Aidant {http.auth.user.id}
+            header_up X-Admin 1
+        }
+    }
+    handle_path /aidants/* {
+        import aidants
+        root * /srv/aidants
+        file_server
+        header {
+            Cache-Control "no-store"
+            X-Robots-Tag "noindex, nofollow"
+            Referrer-Policy "no-referrer"
+        }
+    }
+    handle /webhook/<TOKEN>-* {
+        respond 404
+    }
+    handle {
+        reverse_proxy n8n:5678
+    }
+}

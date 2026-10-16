@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Journal des parents</title>
+<style>
+  :root{
+    --bg:#EEF1F3; --surface:#FFFFFF; --ink:#14202B; --muted:#5C6873; --line:#D3D9DE;
+    --maman:#6B2D5C; --papa:#1F5E63; --rec:#C0392B; --acouvrir:#B8611A; --couvert:#2F7A4D;
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#0F1418; --surface:#182027; --ink:#E8EDF1; --muted:#93A0AB; --line:#2A343D;
+      --maman:#8E4380; --papa:#2F7C82; --rec:#D9483B; --acouvrir:#E8A15A; --couvert:#5FB183;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0F1418; --surface:#182027; --ink:#E8EDF1; --muted:#93A0AB; --line:#2A343D;
+    --maman:#8E4380; --papa:#2F7C82; --rec:#D9483B; --acouvrir:#E8A15A; --couvert:#5FB183;
+  }
+  *,*::before,*::after{box-sizing:inherit}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    font-size:18px;line-height:1.4;
+    display:flex;flex-direction:column;gap:12px;padding:14px 14px 18px}
+  header{display:flex;justify-content:space-between;align-items:center;min-height:32px}
+  header p{margin:0;font-size:.9rem;color:var(--muted)}
+  main{flex:1;display:flex;flex-direction:column;gap:12px;min-height:0}
+  .lien{background:none;border:0;padding:6px 0;font:inherit;font-size:.9rem;color:var(--muted);
+    text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+  .rec{flex:1 1 0;min-height:140px;width:100%;border:0;border-radius:22px;padding:20px 24px;
+    display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:2px;
+    color:#fff;text-align:left;font:inherit;cursor:pointer;transition:flex-grow .25s ease}
+  .rec .qui{font-size:1rem;opacity:.85}
+  .rec .pour{font-size:2.6rem;font-weight:800;letter-spacing:-.01em;line-height:1.05}
+  .rec .aide{font-size:.95rem;opacity:.8;margin-top:6px}
+  .rec[data-pour="Maman"]{background:var(--maman)}
+  .rec[data-pour="Papa"]{background:var(--papa)}
+  .rec.on{background:var(--rec);flex-grow:2}
+  .rec.on .pour{font-size:2rem}
+  .rec.on .aide::before{content:"";display:inline-block;width:.6em;height:.6em;border-radius:50%;
+    background:#fff;margin-right:.45em;vertical-align:.02em;animation:battement 1.2s ease-in-out infinite}
+  @keyframes battement{50%{opacity:.25} }
+  @media (prefers-reduced-motion:reduce){
+    .rec{transition:none}
+    .rec.on .aide::before{animation:none}
+  }
+  .rec:focus-visible,.lien:focus-visible,.btn:focus-visible,input:focus-visible,textarea:focus-visible,#texte:focus-visible{
+    outline:3px solid var(--ink);outline-offset:3px}
+  #texte{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;
+    min-height:90px;max-height:30vh;overflow-y:auto;white-space:pre-wrap}
+  #texte:empty::before{content:"Le texte dicté s'affiche ici pendant que vous parlez.";color:var(--muted)}
+  #texte.corrigeable{cursor:text;border:1px dashed var(--muted)}
+  .provisoire{color:var(--muted)}
+  #astuce{margin:-6px 0 0;font-size:.9rem;color:var(--muted)}
+  #annuler{align-self:center}
+  #etat{text-align:center;color:var(--muted);font-size:.95rem;min-height:1.4em;margin:0}
+  .panneau{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .panneau label{display:block;font-size:.95rem;color:var(--muted);margin-bottom:8px}
+  input,textarea{width:100%;font:inherit;color:inherit;background:var(--bg);
+    border:1px solid var(--line);border-radius:10px;padding:12px}
+  textarea{min-height:160px;resize:vertical}
+  .btn{width:100%;margin-top:10px;border:0;border-radius:12px;color:#fff;font:inherit;font-weight:700;
+    padding:15px;cursor:pointer}
+  .btn.maman{background:var(--maman)}
+  .btn.papa{background:var(--papa)}
+  .btn.neutre{background:var(--ink);color:var(--bg)}
+  .btn.secondaire{background:var(--surface);color:var(--ink);border:1px solid var(--line);margin-top:0}
+  #vers-dictee{display:block;margin:12px auto 0}
+  .onglets{display:flex;gap:8px}
+  .onglets button{flex:1;padding:11px;border-radius:12px;border:1px solid var(--line);background:var(--surface);
+    color:var(--ink);font:inherit;font-weight:700;cursor:pointer}
+  .onglets button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .onglets button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+  #agenda{display:flex;flex-direction:column;gap:10px}
+  .jour{margin:10px 0 0;font-size:1rem;font-weight:700}
+  .rdv{background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--line);border-radius:14px;padding:12px 14px}
+  .rdv.acouvrir{border-left-color:var(--acouvrir)}
+  .rdv.couvert{border-left-color:var(--couvert)}
+  .rdv-haut{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.9rem;color:var(--muted)}
+  .pastille{border-radius:999px;padding:1px 10px;color:#fff;font-size:.85rem;font-weight:600}
+  .pastille.Maman{background:var(--maman)}
+  .pastille.Papa{background:var(--papa)}
+  .rdv-titre{margin:4px 0 2px;font-weight:700}
+  .rdv-lieu{margin:0;color:var(--muted);font-size:.9rem}
+  .rdv-bas{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+  .etat{font-size:.95rem;font-weight:700}
+  .etat.acouvrir{color:var(--acouvrir)}
+  .etat.couvert{color:var(--couvert)}
+  .btn.prendre{width:auto;margin:0;padding:10px 16px;background:var(--ink);color:var(--bg)}
+  .vide{color:var(--muted);margin:8px 0}
+  #documents{display:flex;flex-direction:column;gap:10px}
+  .form-doc label{display:block;font-size:.95rem;color:var(--muted);margin:12px 0 6px}
+  .form-doc label:first-child{margin-top:0}
+  .form-doc select{width:100%;font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px}
+  .form-doc input[type=file]{padding:10px}
+  .panneau label.case{display:flex;gap:10px;align-items:flex-start;margin:0;padding:6px 0;color:var(--ink);font-size:.95rem}
+  .case input{width:auto;margin-top:3px}
+  #doc-etat{margin:10px 0 0;color:var(--muted);font-size:.95rem;min-height:1.4em}
+  .doc{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+  .fichiers{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .fichier{color:var(--ink)}
+  .fichier img{width:88px;height:88px;object-fit:cover;border-radius:8px;border:1px solid var(--line);display:block}
+  .fichier span{display:inline-block;padding:8px 12px;border:1px solid var(--line);border-radius:10px}
+  .rdv-docs{margin:8px 0 0;display:flex;flex-direction:column;gap:4px;font-size:.95rem}
+  .rdv-docs a{color:var(--ink)}
+  .rdv.admin{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+  #adm-fond{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;z-index:50}
+  #adm-fond[hidden]{display:none}
+  #adm-boite{background:var(--surface);color:var(--ink);width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:92vh;overflow:auto}
+  #adm-boite h3{margin:0 0 10px;font-size:1.05rem}
+  #adm-boite label{display:block;margin:10px 0 4px;font-size:.85rem;color:var(--muted)}
+  #adm-boite input,#adm-boite select{width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:inherit}
+  #adm-boite .btn{margin-top:10px}
+  #adm-boite .danger{background:var(--rec)}
+  #adm-msg{margin:8px 0 0;font-size:.9rem;color:var(--rec);min-height:1.2em}
+  [hidden]{display:none !important}
+</style>
+</head>
+<body>
+
+<header>
+  <p id="moi"></p>
+  <button class="lien" id="changer" type="button" hidden>Changer de prénom</button>
+</header>
+
+<nav class="onglets" id="onglets" hidden>
+  <button type="button" id="onglet-dicter" aria-selected="true">Dicter</button>
+  <button type="button" id="onglet-agenda" aria-selected="false">Agenda</button>
+  <button type="button" id="onglet-documents" aria-selected="false">Documents</button>
+</nav>
+
+<section class="panneau" id="accueil" hidden>
+  <label for="prenom">Votre prénom, tel qu'il apparaîtra dans le journal</label>
+  <input id="prenom" autocomplete="given-name" enterkeyhint="done">
+  <button class="btn neutre" id="valider" type="button">Valider</button>
+</section>
+
+<main id="principal" hidden>
+  <button class="rec" data-pour="Maman" type="button">
+    <span class="qui"></span><span class="pour">Maman</span><span class="aide"></span>
+  </button>
+  <button class="rec" data-pour="Papa" type="button">
+    <span class="qui"></span><span class="pour">Papa</span><span class="aide"></span>
+  </button>
+  <div id="texte" aria-live="polite"></div>
+  <p id="astuce" hidden>Touchez le texte pour le corriger avant l'envoi.</p>
+  <button class="lien" id="annuler" type="button" hidden>Annuler sans envoyer</button>
+  <button class="btn secondaire" id="vers-clavier" type="button">Écrire au clavier</button>
+</main>
+
+<section class="panneau" id="clavier" hidden>
+  <label for="saisie" id="libelle-saisie">Tapez la note, ou dictez-la avec le micro du clavier.</label>
+  <textarea id="saisie"></textarea>
+  <button class="btn maman" data-pour="Maman" type="button">Envoyer pour Maman</button>
+  <button class="btn papa" data-pour="Papa" type="button">Envoyer pour Papa</button>
+  <button class="lien" id="vers-dictee" type="button">Revenir à la dictée</button>
+</section>
+
+<section id="agenda" hidden aria-live="polite">
+  <div id="agenda-liste"></div>
+  <button class="btn secondaire" id="agenda-maj" type="button">Actualiser</button>
+</section>
+
+<section id="documents" hidden>
+  <div class="panneau form-doc">
+    <label for="doc-fichier">Photo ou fichier (image, PDF, Word, Excel ou texte)</label>
+    <input type="file" id="doc-fichier" accept="image/*,application/pdf,.docx,.xlsx,.txt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/plain">
+    <label for="doc-nom">Nom du document</label>
+    <input id="doc-nom" placeholder="Ex. Ordonnance du cardiologue">
+    <label for="doc-type">Type</label>
+    <select id="doc-type">
+      <option>Ordonnance</option><option>Convocation</option><option>Compte rendu</option>
+      <option>Feuille de soins</option><option>Courrier</option><option>Facture</option>
+      <option selected>Autre</option>
+    </select>
+    <label for="doc-personne">Concerne</label>
+    <select id="doc-personne"><option value="">Non précisé</option><option>Maman</option><option>Papa</option></select>
+    <label>Rendez-vous liés</label>
+    <div id="doc-rdv"></div>
+    <button class="btn neutre" id="doc-envoyer" type="button">Enregistrer le document</button>
+    <p id="doc-etat" role="status"></p>
+  </div>
+  <h2 class="jour">Documents enregistrés</h2>
+  <div id="doc-liste" aria-live="polite"></div>
+</section>
+
+<p id="etat" role="status"></p>
+
+<script>
+// ---- Points d'accès relayés par Caddy, sous /aidants/api/ (mot de passe familial) ----
+const WEBHOOK_URL = "api/note";
+const AGENDA_URL = "api/agenda";
+const POSITION_URL = "api/positionner";
+const DOCS_URL = "api/documents";
+const DOC_URL = "api/document";
+// -----------------------------------------------------------------------
+
+const $ = id => document.getElementById(id);
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch (_) { return null; } },
+  set(k, v){ try { localStorage.setItem(k, v); } catch (_) {} }
+};
+const recs = [...document.querySelectorAll(".rec")];
+const envois = [...document.querySelectorAll("#clavier .btn[data-pour]")];
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+// Prénom : ?aidant=Prenom dans le lien du raccourci, sinon mémorisé, sinon demandé une fois
+let aidant = (new URLSearchParams(location.search).get("aidant") || store.get("aidant") || "").trim();
+if (aidant) store.set("aidant", aidant);
+// Avec un identifiant par aidant, le prénom vient de la connexion (api/moi) et ne se modifie pas
+let identifie = false;
+
+const say = msg => { $("etat").textContent = msg || ""; };
+const joinTxt = (...p) => p.filter(Boolean).join(" ").split(" ").filter(Boolean).join(" ");
+const now = () => new Date().toISOString();
+
+function idle(b){
+  b.hidden = false;
+  b.classList.remove("on");
+  b.querySelector(".qui").textContent = aidant + " pour";
+  b.querySelector(".pour").textContent = b.dataset.pour;
+  b.querySelector(".aide").textContent = "Appuyez pour commencer l'enregistrement";
+}
+function render(){
+  const known = !!aidant;
+  $("accueil").hidden = known;
+  $("moi").textContent = known ? "Prénom : " + aidant : "";
+  $("changer").hidden = !known || identifie;
+  $("principal").hidden = !known || !SR;
+  $("clavier").hidden = !known || !!SR;
+  $("vers-dictee").hidden = !SR;
+  $("onglets").hidden = !known;
+  if (!known) { $("agenda").hidden = true; $("documents").hidden = true; }
+  recs.forEach(idle);
+}
+
+$("valider").addEventListener("click", () => {
+  const v = $("prenom").value.trim();
+  if (!v) { $("prenom").focus(); return; }
+  aidant = v; store.set("aidant", v); render();
+});
+$("prenom").addEventListener("keydown", e => { if (e.key === "Enter") $("valider").click(); });
+$("changer").addEventListener("click", () => {
+  if (busy) return;
+  const ancien = aidant; aidant = ""; render();
+  $("prenom").value = ancien; $("prenom").focus();
+});
+
+// ---- Zone de saisie : clavier libre ou correction d'une dictée --------
+// pour = "" : saisie au clavier, les deux boutons d'envoi sont proposés
+// pour = "Papa" : correction d'une dictée faite pour Papa, un seul bouton
+let editeur = { pour: "", source: "Clavier web" };
+
+function openEditor(texte, p, source){
+  editeur = { pour: p || "", source: source || "Clavier web" };
+  $("saisie").value = texte || "";
+  $("libelle-saisie").textContent = p
+    ? "Corrigez la note pour " + p + ", puis envoyez-la."
+    : "Tapez la note, ou dictez-la avec le micro du clavier.";
+  envois.forEach(b => { b.hidden = !!p && b.dataset.pour !== p; });
+  $("vers-dictee").textContent = p ? "Annuler sans envoyer" : "Revenir à la dictée";
+  $("vers-dictee").hidden = !p && !SR;
+  $("principal").hidden = true;
+  $("clavier").hidden = false;
+  const t = $("saisie");
+  t.focus();
+  t.setSelectionRange(t.value.length, t.value.length);
+}
+function closeEditor(){
+  editeur = { pour: "", source: "Clavier web" };
+  $("agenda").hidden = true;
+  $("documents").hidden = true;
+  envois.forEach(b => { b.hidden = false; });
+  $("clavier").hidden = !!SR;
+  $("principal").hidden = !SR;
+}
+
+$("vers-clavier").addEventListener("click", () => {
+  if (busy) return;
+  say("");
+  openEditor("", "", "Clavier web");
+});
+$("vers-dictee").addEventListener("click", () => {
+  if (editeur.pour) {
+    $("saisie").value = "";
+    say("Note annulée, rien n'a été envoyé.");
+  }
+  closeEditor();
+});
+envois.forEach(b => b.addEventListener("click", async () => {
+  const texte = $("saisie").value.trim();
+  if (!texte) { $("saisie").focus(); return; }
+  const source = editeur.source;
+  await send({ aidant, personne: b.dataset.pour, texte, date: now(), source });
+  $("saisie").value = "";   // envoyée ou mise en attente : dans les deux cas elle est sauvegardée
+  if (SR) closeEditor();
+}));
+
+// ---- Dictée (Web Speech API) ------------------------------------------
+let reco = null, pour = "", listening = false, busy = false;
+let cancelled = false, cancelMsg = "", versClavier = false, editing = false;
+let committed = "", session = "", interim = "", run = 0, lock = null, garde = 0;
+
+function show(){
+  const box = $("texte");
+  box.textContent = joinTxt(committed, session);
+  if (interim) {
+    const s = document.createElement("span");
+    s.className = "provisoire";
+    s.textContent = (box.textContent ? " " : "") + interim;
+    box.append(s);
+  }
+  box.scrollTop = box.scrollHeight;
+}
+
+// Une instance neuve par session : les résultats tardifs d'une session précédente
+// sont ignorés (sur Android, ils ressurgissaient et provoquaient des doublons).
+// Un seul bip au début et un à la fin : le bip est celui du service vocal du téléphone,
+// émis à chaque ouverture et fermeture de session. On garde donc une seule session
+// continue (sur Android aussi) et on fusionne les révisions d'une même phrase.
+// Pour revenir à une session par phrase sur Android : UNE_SESSION = false.
+const ANDROID = /Android/i.test(navigator.userAgent);
+const UNE_SESSION = true;
+const mots = t => t.toLowerCase().replace(/[^a-z0-9àâäçéèêëîïôöùûüÿœ\s'-]/g, " ").split(/\s+/).filter(Boolean);
+function memePhrase(a, b){
+  const x = mots(a), y = mots(b);
+  const n = Math.min(x.length, y.length);
+  if (!n) return false;
+  let k = 0;
+  while (k < n && x[k] === y[k]) k++;
+  return k === n || (n >= 4 && k >= Math.ceil(n * 0.8));
+}
+function nouvelleReco(){
+  const r = new SR();
+  r.lang = "fr-FR";
+  r.continuous = UNE_SESSION || !ANDROID;
+  r.interimResults = true;
+
+  r.onresult = e => {
+    if (r !== reco) return;
+    let fin = "", inter = "";
+    const finals = [];
+    for (let i = 0; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript.trim();
+      if (!t) continue;
+      if (e.results[i].isFinal) {
+        finals[finals.length] = t;
+      } else {
+        inter = joinTxt(inter, t);
+      }
+    }
+    // révisions d'une même phrase : seule la dernière version est gardée
+    const uniques = [];
+    for (const t of finals) {
+      const dernier = uniques[uniques.length - 1];
+      if (dernier !== undefined && memePhrase(dernier, t)) uniques[uniques.length - 1] = t;
+      else uniques.push(t);
+    }
+    for (const t of uniques) fin = joinTxt(fin, t);
+    session = fin; interim = inter;
+    show();
+  };
+  r.onerror = e => {
+    if (r !== reco) return;
+    if (e.error === "no-speech" || e.error === "aborted") return;   // relance gérée par onend
+    if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+      cancel("Le micro est bloqué. Autorisez-le pour ce site dans les réglages de Chrome, puis réessayez.");
+    } else if (e.error === "network") {
+      versClavier = true;
+      cancel("Pas de réseau pour la dictée : terminez la note au clavier, elle partira dès que le réseau revient.");
+    } else {
+      say("Dictée interrompue (" + e.error + ").");
+    }
+  };
+  r.onend = () => {
+    if (r !== reco) return;
+    committed = joinTxt(committed, session); session = ""; interim = "";
+    if (listening) {
+      reco = nouvelleReco();
+      try { reco.start(); } catch (_) {}
+    } else {
+      finish();
+    }
+  };
+  return r;
+}
+
+function start(p){
+  run++; pour = p; listening = true; busy = true;
+  cancelled = false; cancelMsg = ""; versClavier = false; editing = false;
+  committed = session = interim = ""; show(); say("");
+  recs.forEach(b => {
+    const mine = b.dataset.pour === p;
+    b.hidden = !mine;
+    b.classList.toggle("on", mine);
+    if (mine) {
+      b.querySelector(".qui").textContent = aidant + " pour " + p;
+      b.querySelector(".pour").textContent = "Terminer et envoyer";
+      b.querySelector(".aide").textContent = "Enregistrement en cours";
+    }
+  });
+  $("texte").classList.add("corrigeable");
+  $("texte").tabIndex = 0;
+  $("astuce").hidden = false;
+  $("annuler").hidden = false;
+  $("vers-clavier").hidden = true;
+  reco = nouvelleReco();
+  try { reco.start(); } catch (_) {}
+  if ("wakeLock" in navigator) navigator.wakeLock.request("screen").then(l => { lock = l; }).catch(() => {});
+}
+function stop(){
+  if (!listening) return;
+  listening = false;
+  say("Envoi…");
+  const r = run;
+  try { reco.stop(); } catch (_) {}
+  setTimeout(() => { if (r === run) finish(); }, 3000);   // filet si onend n'arrive pas
+}
+function corriger(){
+  if (!listening) return;
+  editing = true; listening = false;
+  const r = run;
+  try { reco.stop(); } catch (_) {}
+  setTimeout(() => { if (r === run) finish(); }, 3000);
+}
+function cancel(msg){
+  if (!busy) return;
+  cancelled = true; cancelMsg = msg || ""; listening = false;
+  const r = run;
+  try { reco.abort(); } catch (_) {}
+  setTimeout(() => { if (r === run) finish(); }, 1500);
+}
+async function finish(){
+  if (!busy) return;
+  busy = false; listening = false;
+  garde = Date.now() + 1500;
+  if (lock) { lock.release().catch(() => {}); lock = null; }
+  const texte = joinTxt(committed, session);
+  const p = pour;
+  committed = session = interim = ""; show();
+  recs.forEach(idle);
+  $("texte").classList.remove("corrigeable");
+  $("texte").tabIndex = -1;
+  $("astuce").hidden = true;
+  $("annuler").hidden = true;
+  $("vers-clavier").hidden = false;
+  if (cancelled) {
+    say(cancelMsg || "Enregistrement annulé, rien n'a été envoyé.");
+    if (versClavier) openEditor(texte, p, "Vocal web");
+    return;
+  }
+  if (editing) {
+    editing = false;
+    say("");
+    openEditor(texte, p, "Vocal web");
+    return;
+  }
+  if (!texte) { say("Aucune parole reconnue. Réessayez en parlant près du téléphone."); return; }
+  await send({ aidant, personne: p, texte, date: now(), source: "Vocal web" });
+}
+
+recs.forEach(b => b.addEventListener("click", () => {
+  if (listening) stop();
+  else if (!busy && Date.now() >= garde) start(b.dataset.pour);
+}));
+$("annuler").addEventListener("click", () => cancel());
+$("texte").addEventListener("click", corriger);
+$("texte").addEventListener("keydown", e => {
+  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); corriger(); }
+});
+
+// Écran éteint ou appli quittée pendant l'enregistrement : on envoie ce qui a été dicté
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && listening) stop();
+  else if (!document.hidden) flush();
+});
+
+// ---- Envoi + file d'attente hors ligne ---------------------------------
+async function post(p){
+  const r = await fetch(WEBHOOK_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(p)
+  });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+}
+async function send(p){
+  say("Envoi…");
+  try { await post(p); say("Note envoyée pour " + p.personne + "."); }
+  catch (_) { queue(p); say("Pas de réseau : la note est gardée sur ce téléphone et partira automatiquement."); }
+}
+function queue(p){
+  try {
+    const q = JSON.parse(store.get("attente") || "[]");
+    q.push(p);
+    store.set("attente", JSON.stringify(q));
+  } catch (_) {}
+}
+let flushing = false;
+async function flush(){
+  if (flushing) return;
+  let q;
+  try { q = JSON.parse(store.get("attente") || "[]"); } catch (_) { return; }
+  if (!q.length) return;
+  flushing = true;
+  const reste = [];
+  for (const p of q) { try { await post(p); } catch (_) { reste.push(p); } }
+  store.set("attente", JSON.stringify(reste));
+  flushing = false;
+  if (!busy) say(reste.length
+    ? reste.length + (reste.length > 1 ? " notes en attente d'envoi." : " note en attente d'envoi.")
+    : "Notes en attente envoyées.");
+}
+window.addEventListener("online", flush);
+
+// ---- Agenda : rendez-vous à venir et positionnement -----------------------
+function montrerOnglet(o){
+  if (busy) return;
+  ["dicter", "agenda", "documents"].forEach(n => $("onglet-" + n).setAttribute("aria-selected", String(n === o)));
+  $("agenda").hidden = o !== "agenda";
+  $("documents").hidden = o !== "documents";
+  if (o === "dicter") { closeEditor(); return; }
+  $("principal").hidden = true;
+  $("clavier").hidden = true;
+  say("");
+  if (o === "agenda") chargerAgenda();
+  if (o === "documents") chargerDocuments();
+}
+$("onglet-dicter").addEventListener("click", () => montrerOnglet("dicter"));
+$("onglet-agenda").addEventListener("click", () => montrerOnglet("agenda"));
+$("onglet-documents").addEventListener("click", () => montrerOnglet("documents"));
+$("agenda-maj").addEventListener("click", chargerAgenda);
+
+function el(tag, cls, txt){
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (txt !== undefined) e.textContent = txt;
+  return e;
+}
+function libelleJour(iso){
+  const d = new Date(iso + "T12:00:00");
+  const auj = new Date(); auj.setHours(12, 0, 0, 0);
+  const ecart = Math.round((d - auj) / 86400000);
+  const txt = d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+  const cap = txt.charAt(0).toUpperCase() + txt.slice(1);
+  return ecart === 0 ? "Aujourd'hui · " + cap : ecart === 1 ? "Demain · " + cap : cap;
+}
+let agendaCache = [], documentsCache = [], preselection = null;
+async function lireAgenda(){
+  const r = await fetch(AGENDA_URL, { cache: "no-store" });
+  if (r.status === 401) { location.reload(); throw new Error("401"); }
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  const d = await r.json();
+  agendaCache = Array.isArray(d.evenements) ? d.evenements : [];
+}
+async function lireDocuments(){
+  const r = await fetch(DOCS_URL, { cache: "no-store" });
+  if (r.status === 401) { location.reload(); throw new Error("401"); }
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  const d = await r.json();
+  documentsCache = Array.isArray(d.documents) ? d.documents : [];
+}
+async function chargerAgenda(){
+  const liste = $("agenda-liste");
+  liste.textContent = "";
+  liste.append(el("p", "vide", "Chargement…"));
+  try { await lireAgenda(); }
+  catch (_) {
+    liste.textContent = "";
+    liste.append(el("p", "vide", "Agenda indisponible pour le moment. Vérifiez le réseau, puis Actualiser."));
+    return;
+  }
+  try { await lireDocuments(); } catch (_) {}
+  afficherAgenda(agendaCache);
+}
+function afficherAgenda(evts){
+  const liste = $("agenda-liste");
+  liste.textContent = "";
+  if (!evts.length) { liste.append(el("p", "vide", "Aucun rendez-vous à venir.")); return; }
+  let jour = "";
+  for (const e of evts) {
+    if (e.date !== jour) { jour = e.date; liste.append(el("h2", "jour", libelleJour(e.date))); }
+    const libre = !e.accompagnant;
+    const moi = e.accompagnant && e.accompagnant === aidant;
+    const carte = el("div", "rdv " + (libre ? "acouvrir" : "couvert"));
+    const haut = el("div", "rdv-haut");
+    haut.append(el("span", "", e.heure ? e.heure : "Heure non précisée"));
+    if (e.personne) haut.append(el("span", "pastille " + e.personne, e.personne));
+    carte.append(haut, el("p", "rdv-titre", e.evenement || "Rendez-vous"));
+    if (e.lieu) carte.append(el("p", "rdv-lieu", e.lieu));
+    const bas = el("div", "rdv-bas");
+    if (e.statut === "Fait") {
+      bas.append(el("span", "etat", "Fait" + (e.accompagnant ? " (" + e.accompagnant + ")" : "")));
+    } else if (libre) {
+      bas.append(el("span", "etat acouvrir", "À couvrir"));
+      const b = el("button", "btn prendre", "Je m'en occupe");
+      b.type = "button";
+      b.addEventListener("click", () => positionner(e.id, "prendre", b));
+      bas.append(b);
+    } else if (moi) {
+      bas.append(el("span", "etat couvert", "Vous vous en occupez"));
+      const b = el("button", "lien", "Je me retire");
+      b.type = "button";
+      b.addEventListener("click", () => positionner(e.id, "liberer", b));
+      bas.append(b);
+    } else {
+      bas.append(el("span", "etat couvert", "Pris par " + e.accompagnant));
+    }
+    carte.append(bas);
+    const docs = (e.documents || []).map(id => documentsCache.find(d => d.id === id)).filter(Boolean);
+    if (docs.length) {
+      const bloc = el("div", "rdv-docs");
+      docs.forEach(d => {
+        const f = (d.fichiers || [])[0];
+        if (f && /^https:[/][/]/.test(f.url)) {
+          const a = el("a", "", "Document : " + d.nom);
+          a.href = f.url; a.target = "_blank"; a.rel = "noopener";
+          bloc.append(a);
+        } else {
+          bloc.append(el("span", "", "Document : " + d.nom));
+        }
+      });
+      carte.append(bloc);
+    }
+    const joindre = el("button", "lien", "Joindre un document");
+    joindre.type = "button";
+    joindre.addEventListener("click", () => {
+      preselection = e.id;
+      if (e.personne) $("doc-personne").value = e.personne;
+      montrerOnglet("documents");
+    });
+    carte.append(joindre);
+    if (peutGerer(e)) {
+      carte.classList.add("admin");
+      appuiLong(carte, () => menuAdmin(e));
+    }
+    liste.append(carte);
+  }
+}
+
+// ---- Administration des événements (éditeurs et auteur du rendez-vous) -------------------
+// Contrôle d'affichage seulement : le serveur (Caddy et n8n) refait la vérification.
+let editeurs = [];
+function estAdmin(){ return identifie && editeurs.includes(aidant); }
+// Chacun gère ses propres événements (créés par ses notes) ; les éditeurs gèrent tous les événements.
+// Affichage seulement : le serveur (Caddy + n8n) refait la vérification.
+function peutGerer(e){ return identifie && (estAdmin() || (!!e.createur && e.createur === aidant)); }
+function urlGestion(nom){ return "api/rdv-" + (estAdmin() ? "admin-" : "") + nom; }
+// Liste des comptes autorisés à modifier/supprimer (affichage seulement : Caddy applique le droit)
+function chargerDroits(){
+  fetch("editeurs.json", { cache: "no-store" })
+    .then(r => (r.ok ? r.json() : []))
+    .then(l => { editeurs = Array.isArray(l) ? l : []; if (agendaCache.length) afficherAgenda(agendaCache); })
+    .catch(() => {});
+}
+function appuiLong(node, action){
+  let t = null, x0 = 0, y0 = 0;
+  const stop = () => { if (t) { clearTimeout(t); t = null; } };
+  node.addEventListener("touchstart", ev => {
+    if (ev.target.closest("button, a")) return;
+    const p = ev.touches[0]; x0 = p.clientX; y0 = p.clientY;
+    stop(); t = setTimeout(() => { t = null; if (navigator.vibrate) navigator.vibrate(30); action(); }, 600);
+  }, { passive: true });
+  node.addEventListener("touchmove", ev => {
+    const p = ev.touches[0];
+    if (Math.abs(p.clientX - x0) > 10 || Math.abs(p.clientY - y0) > 10) stop();
+  }, { passive: true });
+  ["touchend", "touchcancel"].forEach(n => node.addEventListener(n, stop));
+  node.addEventListener("contextmenu", ev => {
+    if (ev.target.closest("button, a")) return;
+    ev.preventDefault(); stop(); action();
+  });
+}
+function fondAdmin(){
+  let f = $("adm-fond");
+  if (!f) {
+    f = el("div"); f.id = "adm-fond"; f.hidden = true;
+    const b = el("div"); b.id = "adm-boite";
+    f.append(b);
+    f.addEventListener("click", ev => { if (ev.target === f) f.hidden = true; });
+    document.body.append(f);
+  }
+  return f;
+}
+function champ(boite, libelle, node){
+  const l = el("label", "", libelle); l.append(node); boite.append(l); return node;
+}
+function menuAdmin(e){
+  const f = fondAdmin(), b = f.firstChild;
+  b.textContent = "";
+  b.append(el("h3", "", e.evenement || "Rendez-vous"));
+  const m = el("button", "btn neutre", "Modifier"); m.type = "button";
+  m.addEventListener("click", () => formAdmin(e));
+  const s = el("button", "btn danger", "Supprimer"); s.type = "button";
+  s.addEventListener("click", () => confirmerSuppression(e));
+  const c = el("button", "btn secondaire", "Annuler"); c.type = "button";
+  c.style.marginTop = "10px";
+  c.addEventListener("click", () => { f.hidden = true; });
+  b.append(m, s, c);
+  f.hidden = false;
+}
+function formAdmin(e){
+  const f = fondAdmin(), b = f.firstChild;
+  b.textContent = "";
+  b.append(el("h3", "", "Modifier le rendez-vous"));
+  const evt = champ(b, "Événement", el("input")); evt.value = e.evenement || "";
+  const date = champ(b, "Date", el("input")); date.type = "date"; date.value = e.date || "";
+  const heure = champ(b, "Heure (facultatif)", el("input")); heure.type = "time"; heure.value = e.heure || "";
+  const lieu = champ(b, "Lieu", el("input")); lieu.value = e.lieu || "";
+  const pers = champ(b, "Pour", el("select"));
+  ["Maman", "Papa"].forEach(p => { const o = el("option", "", p); o.value = p; pers.append(o); });
+  pers.value = e.personne || "Maman";
+  const st = champ(b, "Statut", el("select"));
+  ["À couvrir", "Couvert", "Fait", "Annulé"].forEach(p => { const o = el("option", "", p); o.value = p; st.append(o); });
+  st.value = e.statut || (e.accompagnant ? "Couvert" : "À couvrir");
+  const msg = el("p"); msg.id = "adm-msg";
+  const ok = el("button", "btn neutre", "Enregistrer"); ok.type = "button";
+  const no = el("button", "btn secondaire", "Annuler"); no.type = "button"; no.style.marginTop = "10px";
+  no.addEventListener("click", () => { f.hidden = true; });
+  ok.addEventListener("click", async () => {
+    if (!evt.value.trim() || !date.value) { msg.textContent = "Événement et date obligatoires."; return; }
+    ok.disabled = true; msg.textContent = "";
+    try {
+      const r = await fetch(urlGestion("modifier"), {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: e.id, evenement: evt.value.trim(), date: date.value, heure: heure.value,
+          lieu: lieu.value.trim(), personne: pers.value, statut: st.value })
+      });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      f.hidden = true; say("Rendez-vous modifié."); chargerAgenda();
+    } catch (_) { msg.textContent = "Échec de la modification. Réessayez."; ok.disabled = false; }
+  });
+  b.append(msg, ok, no);
+}
+function confirmerSuppression(e){
+  const f = fondAdmin(), b = f.firstChild;
+  b.textContent = "";
+  b.append(el("h3", "", "Supprimer ce rendez-vous ?"));
+  b.append(el("p", "", (e.evenement || "Rendez-vous") + " — " + e.date + (e.heure ? " à " + e.heure : "")));
+  b.append(el("p", "rdv-lieu", "La note du Journal est conservée."));
+  const msg = el("p"); msg.id = "adm-msg";
+  const ok = el("button", "btn danger", "Oui, supprimer"); ok.type = "button";
+  const no = el("button", "btn secondaire", "Non"); no.type = "button"; no.style.marginTop = "10px";
+  no.addEventListener("click", () => { f.hidden = true; });
+  ok.addEventListener("click", async () => {
+    ok.disabled = true; msg.textContent = "";
+    try {
+      const r = await fetch(urlGestion("supprimer"), {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: e.id })
+      });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      f.hidden = true; say("Rendez-vous supprimé."); chargerAgenda();
+    } catch (_) { msg.textContent = "Échec de la suppression. Réessayez."; ok.disabled = false; }
+  });
+  b.append(msg, ok, no);
+}
+async function positionner(id, action, bouton){
+  bouton.disabled = true;
+  try {
+    const r = await fetch(POSITION_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, aidant, action })
+    });
+    if (r.status === 409) {
+      const d = await r.json().catch(() => ({}));
+      say("Déjà pris par " + (d.pris || "un autre aidant") + ".");
+    } else if (!r.ok) {
+      throw new Error("HTTP " + r.status);
+    } else {
+      say(action === "prendre" ? "C'est noté, merci." : "Vous n'êtes plus positionné sur ce rendez-vous.");
+    }
+  } catch (_) {
+    say("L'enregistrement a échoué, réessayez.");
+  }
+  await chargerAgenda();
+}
+
+// ---- Documents : ajout (photo ou fichier) et liste ------------------------
+const sayDoc = msg => { $("doc-etat").textContent = msg || ""; };
+function dateCourte(iso){
+  const d = new Date(String(iso).length === 10 ? iso + "T12:00:00" : iso);
+  return isNaN(d) ? "" : d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+}
+function libelleRdv(e){
+  return dateCourte(e.date) + (e.heure ? " " + e.heure : "") + " · " + (e.evenement || "Rendez-vous") + (e.personne ? " (" + e.personne + ")" : "");
+}
+async function chargerDocuments(){
+  const liste = $("doc-liste");
+  liste.textContent = "";
+  liste.append(el("p", "vide", "Chargement…"));
+  try { await lireAgenda(); } catch (_) {}
+  afficherCasesRdv();
+  try { await lireDocuments(); }
+  catch (_) {
+    liste.textContent = "";
+    liste.append(el("p", "vide", "Documents indisponibles pour le moment. Vérifiez le réseau, puis réessayez."));
+    return;
+  }
+  afficherDocuments();
+}
+function afficherCasesRdv(){
+  const zone = $("doc-rdv");
+  zone.textContent = "";
+  if (!agendaCache.length) {
+    zone.append(el("p", "vide", "Aucun rendez-vous à venir : le document sera enregistré sans lien."));
+    return;
+  }
+  agendaCache.forEach(e => {
+    const lab = el("label", "case");
+    const c = document.createElement("input");
+    c.type = "checkbox"; c.value = e.id;
+    if (preselection === e.id) c.checked = true;
+    lab.append(c, el("span", "", libelleRdv(e)));
+    zone.append(lab);
+  });
+  preselection = null;
+}
+function lienFichier(f){
+  if (!f || !/^https:[/][/]/.test(f.url)) return el("span", "vide", "Fichier indisponible");
+  const a = el("a", "fichier");
+  a.href = f.url; a.target = "_blank"; a.rel = "noopener";
+  if (f.vignette && /^https:[/][/]/.test(f.vignette)) {
+    const img = document.createElement("img");
+    img.src = f.vignette; img.alt = f.nom || "Aperçu"; img.loading = "lazy";
+    a.append(img);
+  } else {
+    const nomF = String(f.nom || "").toLowerCase();
+    const libelle = f.type === "application/pdf" ? "Ouvrir le PDF"
+      : /[.]docx$/.test(nomF) ? "Ouvrir le document Word"
+      : /[.]xlsx$/.test(nomF) ? "Ouvrir le tableau Excel"
+      : /[.]txt$/.test(nomF) ? "Ouvrir le texte" : "Ouvrir";
+    a.append(el("span", "", libelle));
+  }
+  return a;
+}
+function afficherDocuments(){
+  const liste = $("doc-liste");
+  liste.textContent = "";
+  if (!documentsCache.length) { liste.append(el("p", "vide", "Aucun document pour l'instant.")); return; }
+  for (const d of documentsCache) {
+    const carte = el("div", "doc");
+    const haut = el("div", "rdv-haut");
+    haut.append(el("span", "", [d.type, d.ajoutePar ? "ajouté par " + d.ajoutePar : "", d.date ? dateCourte(d.date) : ""].filter(Boolean).join(" · ")));
+    if (d.personne) haut.append(el("span", "pastille " + d.personne, d.personne));
+    carte.append(haut, el("p", "rdv-titre", d.nom || "Document"));
+    const lies = (d.rendezvous || []).map(id => agendaCache.find(e => e.id === id)).filter(Boolean);
+    const passes = (d.rendezvous || []).length - lies.length;
+    lies.forEach(e => carte.append(el("p", "rdv-lieu", "Rendez-vous : " + libelleRdv(e))));
+    if (passes > 0) carte.append(el("p", "rdv-lieu", passes > 1 ? passes + " rendez-vous passés" : "1 rendez-vous passé"));
+    const fichiers = el("div", "fichiers");
+    if ((d.fichiers || []).length) d.fichiers.forEach(f => fichiers.append(lienFichier(f)));
+    else fichiers.append(el("span", "vide", "Fichier manquant"));
+    carte.append(fichiers);
+    liste.append(carte);
+  }
+}
+function enBase64(blob){
+  return new Promise((ok, ko) => {
+    const r = new FileReader();
+    r.onload = () => ok(String(r.result).split(",")[1] || "");
+    r.onerror = () => ko(new Error("Lecture du fichier impossible."));
+    r.readAsDataURL(blob);
+  });
+}
+async function chargerImage(file){
+  if (window.createImageBitmap) {
+    try { return await createImageBitmap(file); } catch (_) {}
+  }
+  return await new Promise((ok, ko) => {
+    const img = new Image();
+    img.onload = () => ok(img);
+    img.onerror = () => ko(new Error("Image illisible : essayez une photo JPEG ou un PDF."));
+    img.src = URL.createObjectURL(file);
+  });
+}
+const MAX_OCTETS = 4900000;
+async function preparerFichier(file){
+  const base = (file.name || "document").replace(/[.][^.]*$/, "") || "document";
+  if (file.type === "application/pdf") {
+    if (file.size > MAX_OCTETS) throw new Error("PDF trop lourd : 5 Mo maximum.");
+    return { data: await enBase64(file), contentType: "application/pdf", filename: base + ".pdf" };
+  }
+  const FORMATS = {
+    docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    txt: "text/plain"
+  };
+  const ext = ((file.name || "").match(/[.]([A-Za-z0-9]+)$/) || [])[1];
+  const extMin = ext ? ext.toLowerCase() : "";
+  if (FORMATS[extMin]) {
+    if (file.size > MAX_OCTETS) throw new Error("Fichier trop lourd : 5 Mo maximum.");
+    return { data: await enBase64(file), contentType: FORMATS[extMin], filename: base + "." + extMin };
+  }
+  if (!String(file.type).startsWith("image/")) throw new Error("Format non pris en charge : photo, PDF, Word (.docx), Excel (.xlsx) ou texte (.txt).");
+  const img = await chargerImage(file);
+  const ratio = Math.min(1, 2000 / Math.max(img.width, img.height));
+  const w = Math.round(img.width * ratio), h = Math.round(img.height * ratio);
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  c.getContext("2d").drawImage(img, 0, 0, w, h);
+  const blob = await new Promise(ok => c.toBlob(ok, "image/jpeg", 0.82));
+  if (!blob) throw new Error("Conversion de l'image impossible.");
+  if (blob.size > MAX_OCTETS) throw new Error("Image trop lourde, même réduite.");
+  return { data: await enBase64(blob), contentType: "image/jpeg", filename: base + ".jpg" };
+}
+async function envoyerDocument(){
+  const fichier = $("doc-fichier").files[0];
+  if (!fichier) { sayDoc("Choisissez d'abord une photo ou un fichier."); return; }
+  const bouton = $("doc-envoyer");
+  bouton.disabled = true;
+  sayDoc("Préparation du document…");
+  try {
+    const prep = await preparerFichier(fichier);
+    sayDoc("Envoi du document…");
+    const rendezvous = [...document.querySelectorAll("#doc-rdv input:checked")].map(i => i.value);
+    const r = await fetch(DOC_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nom: $("doc-nom").value.trim(), type: $("doc-type").value, personne: $("doc-personne").value,
+        rendezvous, filename: prep.filename, contentType: prep.contentType, data: prep.data
+      })
+    });
+    if (r.status === 401) { location.reload(); return; }
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || !d.ok) throw new Error(d.message || "L'enregistrement a échoué (erreur " + r.status + ").");
+    $("doc-fichier").value = ""; $("doc-nom").value = "";
+    document.querySelectorAll("#doc-rdv input:checked").forEach(i => { i.checked = false; });
+    sayDoc("Document enregistré.");
+    await chargerDocuments();
+  } catch (err) {
+    sayDoc(err instanceof TypeError ? "Pas de réseau : le document n'est pas parti, réessayez." : (err.message || "L'envoi a échoué, réessayez."));
+  } finally {
+    bouton.disabled = false;
+  }
+}
+$("doc-envoyer").addEventListener("click", envoyerDocument);
+
+// ---- Démarrage ---------------------------------------------------------
+render();
+fetch("api/moi", { cache: "no-store" })
+  .then(r => (r.ok ? r.text() : ""))
+  .then(t => {
+    t = (t || "").trim();
+    if (t && t.length < 40 && !t.includes("{") && !t.includes("<")) {
+      aidant = t; identifie = true; store.set("aidant", t);
+      if (!busy) render();
+      if (agendaCache.length) afficherAgenda(agendaCache);
+      chargerDroits();
+    }
+  })
+  .catch(() => {});
+if (/SamsungBrowser/.test(navigator.userAgent)) say("Pour la dictée vocale, ouvrez ce lien dans Chrome.");
+flush();
+</script>
+</body>
+</html>
