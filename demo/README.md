@@ -11,14 +11,15 @@ Copie du Journal des parents avec des **données fictives**, ouverte sans compte
 | Workflows | Des copies des workflows réels (préfixe `DEMO —`), avec leur propre jeton de webhook |
 | Coût | Quota de notes par jour et texte limité à 700 caractères, avant tout appel à Claude |
 | Documents | Envoi de fichiers désactivé |
-| Remise à zéro | Un workflow de purge nocturne supprime ce que les visiteurs ont ajouté |
+| Remise à zéro | Un workflow de purge nocturne supprime ce que les visiteurs ont ajouté, annule leurs « Je m'en occupe » et recale les rendez-vous fictifs par rapport à la date du jour |
 | Page | Bandeau « Démo publique », clés `localStorage` préfixées `demo_` pour ne pas se mélanger avec la vraie page |
 
 ## Contenu
 
 | Chemin | Rôle |
 |---|---|
-| `site/index.html` | Page de la démo (servie sous `/demo/`) |
+| `site/index.html` | Page de la démo (servie sous `/demo/`), avec les balises d'aperçu pour les réseaux sociaux |
+| `site/apercu.png` | Image d'aperçu 1200×630 (carte LinkedIn) |
 | `caddy/demo.caddy.example` | Routes Caddy : identité imposée, webhooks cachés, page statique |
 | `notification/notification-du-jour.json` | Workflow n8n : notification du matin (ntfy) avec les rendez-vous du jour |
 
